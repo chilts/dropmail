@@ -1,0 +1,186 @@
+#!/usr/bin/perl
+## ----------------------------------------------------------------------------
+
+use strict;
+use warnings;
+use File::Basename;
+use File::Copy;
+use File::Slurp;
+use JSON::Any;
+use MIME::Lite;
+
+# my $basedir = q{./spool};
+my $basedir = q{/var/cache/dropmail};
+
+## ----------------------------------------------------------------------------
+
+{
+    my @filenames = <$basedir/*.json>;
+
+    # just get the file names themselves
+    @filenames = map { basename $_ } @filenames;
+
+    # move them all to the 'processing' directory
+    move( qq{$basedir/$_}, qq{$basedir/.processing} )
+        foreach @filenames;
+
+    # read each file in as a hash
+    foreach my $filename ( @filenames ) {
+        # print "File: $filename\n";
+
+        my $file = read_file( qq{$basedir/.processing/$filename} );
+        my $email = eval { JSON::Any->jsonToObj( $file ) };
+        if ( $@ ) {
+            # log a warning (that this didn't parse as JSON)
+            print STDERR qq{$filename couldn't parse as JSON: $@};
+            mv_to_failed( $filename );
+            next;
+        }
+
+        unless ( ref $email eq 'HASH' ) {
+            # log a warning (that this doesn't look like JSON)
+            print STDERR qq{$filename data structure is not a hash\n};
+            mv_to_failed( $filename );
+            next;
+        }
+
+        eval { send_email($email); };
+        if ( $@ ) {
+            # log a warning (that this didn't parse as JSON)
+            print STDERR qq{$filename couldn't be sent: $@};
+            mv_to_failed( $filename );
+            next;
+        }
+
+        # all ok, so move to ok
+        # print " - DONE!\n";
+        mv_to_done( $filename );
+    }
+}
+
+## ----------------------------------------------------------------------------
+
+sub mv_to_failed {
+    my ($filename) = @_;
+    move( qq{$basedir/.processing/$filename}, qq{$basedir/.failed/$filename} );
+}
+
+sub mv_to_done {
+    my ($filename) = @_;
+    move( qq{$basedir/.processing/$filename}, qq{$basedir/.done/$filename} );
+}
+
+## ----------------------------------------------------------------------------
+
+sub send_email {
+    my ($email) = @_;
+
+    # the things we need:
+    # * from
+    # * to (required, a scalar or an array of addresses)
+    # * cc (optional, a scalar or an array of addresses)
+    # * bcc (optional, a scalar or an array of addresses)
+    # * copy_self (optional default false, boolean, will copy 'from' address to the 'bcc' address(es))
+    # * subject (optional, string, default 'No Subject')
+    # * text (required, string)
+    # * html (optional, string
+    # * ToDo: attachments
+
+    unless ( defined $email->{to} ) {
+        # log a warning
+        die "No 'to' given";
+    }
+
+    unless ( defined $email->{from} ) {
+        # log a warning
+        die "No 'from' given";
+    }
+
+    unless ( defined $email->{text} ) {
+        # log a warning
+        die "No 'text' given";
+    }
+
+    $email->{copy_self} //= 0;
+    $email->{subject} //= '[No Subject]';
+
+    # tidy up some inputs so we know what we have
+    if ( ref $email->{to} ne 'ARRAY' ) {
+        $email->{to} = [ $email->{to} ];
+    }
+    if ( defined $email->{cc} and ref $email->{cc} ne 'ARRAY' ) {
+        $email->{cc} = [ $email->{cc} ];
+    }
+    if ( defined $email->{bcc} and ref $email->{bcc} ne 'ARRAY' ) {
+        $email->{bcc} = [ $email->{bcc} ];
+    }
+
+    my $msg;
+    if ( defined $email->{html} ) {
+        $msg = MIME::Lite->new(
+            Type    => 'multipart/alternative',
+        );
+        # attach the plain text
+        $msg->attach(
+            Type    => q{text/plain; utf-8},
+            Data    => $email->{text},
+        );
+        $msg->attach(
+            Type    => q{text/html; utf-8},
+            Data    => $email->{html},
+        );
+    }
+    else {
+        # just send a normal text message
+        $msg = MIME::Lite->new(
+            Data     => $email->{text},
+        );
+    }
+
+    # copy this email to self if wanted
+    if ( $email->{copy_self} ) {
+        push @{$email->{bcc}}, $email->{from};
+    }
+
+    # do the required headers
+    foreach my $hdr ( qw(from subject) ) {
+        $msg->add($hdr, $email->{$hdr} );
+    }
+
+    # do the headers which can be from lists
+    foreach my $hdr ( qw( to cc bcc ) ) {
+        next unless defined $email->{$hdr};
+        $msg->add( $hdr, _flatten($email->{$hdr}) );
+    }
+
+    # ToDo: attachments
+    # do any attachments we might have
+    # foreach my $attachment ( @{$email->{attachments}} ) {
+    #     $msg->attach( %$attachment );
+    # }
+
+    # put our own X-Mailer header on the email
+    $msg->replace( q{x-mailer}, q{DropMail - http://www.github.com/appsattic/dropmail} );
+
+    # finally, send the message
+    $msg->send();
+}
+
+sub _flatten {
+    my ($thing) = @_;
+
+    return unless defined $thing;
+
+    if ( ref $thing eq 'ARRAY' ) {
+        return join( ', ', @$thing );
+    }
+    elsif ( ref $thing ) {
+        # not sure what to do with other references, so stringify it
+        return "$thing";
+    }
+
+    # else, just a scalar
+    return $thing;
+}
+
+## ----------------------------------------------------------------------------
