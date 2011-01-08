@@ -53,9 +53,15 @@ my $log = get_logger();
         $log->info( q{-} x 79 );
         $log->info( qq{File: $file->{basename}} );
 
+        # check the file still exists (since another dropmail process might have taken it)
+        unless ( -f qq{$basedir/$file->{subdir}/$file->{basename}} ) {
+            $log->warn( qq{Couldn't find '$file->{basename}, skipping} );
+            next;
+        }
+
         # first thing to do is to move the file to processing
         unless ( mv_to_processing( $file ) ) {
-            $log->warn( qq{Couldn't find '$file->{basename}, skipping} );
+            $log->warn( qq{$file->{basename} failed to move to processing} );
             next;
         }
 
