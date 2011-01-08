@@ -23,72 +23,97 @@ my $log = get_logger();
 ## ----------------------------------------------------------------------------
 
 {
-    $log->info( q{-} x 79 );
+    $log->info( q{=} x 79 );
     $log->info( q{Started} );
 
-    my @filenames = <$basedir/*.json>;
-
-    # just get the file names themselves
-    @filenames = map { basename $_ } @filenames;
+    # get the filenames and then save various bits of info
+    my @filenames = ( <$basedir/*.json>, <$basedir/*/*.json> );
+    my @files;
+    for my $filename ( @filenames ) {
+        my $info = {};
+        $info->{fullfile} = $filename;
+        $info->{basename} = basename($filename);
+        $info->{fulldir}  = dirname($filename);
+        $info->{subdir}   = $info->{fulldir};
+        if ( $info->{fulldir} eq q{/var/cache/dropmail} ) {
+            $info->{subdir} = q{.};
+        }
+        else {
+            $info->{subdir} = $info->{fulldir};
+            ($info->{subdir}) = $info->{subdir} =~ m{ ([^\/]+) \z }xms;
+        }
+        push @files, $info;
+    }
 
     # move them all to the 'processing' directory
-    $log->info( q{Files found: } . (scalar @filenames) );
-    foreach my $filename ( @filenames ) {
-        mv_to_processing( $filename );
+    $log->info( q{Files found: } . (scalar @files) );
+    foreach my $file ( @files ) {
+        mv_to_processing( $file );
     }
 
     # read each file in as a hash
-    foreach my $filename ( @filenames ) {
-        $log->info( qq{Reading file '$filename'} );
+    foreach my $file ( @files ) {
+        $log->info( q{-} x 79 );
+        $log->info( qq{File: $file->{basename}} );
 
-        my $file = read_file( qq{$basedir/.processing/$filename} );
-        my $email = eval { JSON::Any->jsonToObj( $file ) };
+        my $json = read_file( qq{$basedir/.processing/$file->{subdir}/$file->{basename}} );
+        my $email = eval { JSON::Any->jsonToObj( $json ) };
         if ( $@ ) {
             # couldn't parse
-            mv_to_failed( $filename, qq{$filename couldn't parse as JSON: $@} );
+            mv_to_failed( $file, qq{$file->{basename} couldn't parse as JSON: $@} );
             next;
         }
 
         unless ( ref $email eq 'HASH' ) {
             # not a hash
-            mv_to_failed( $filename, qq{$filename data structure is not a hash} );
+            mv_to_failed( $file, qq{$file->{basename} data structure is not a hash} );
             next;
         }
 
         eval { send_email($email); };
         if ( $@ ) {
             # couldn't send
-            mv_to_failed( $filename, qq{$filename couldn't be sent: $@} );
+            mv_to_failed( $file, qq{$file->{basename} couldn't be sent: $@} );
             next;
         }
 
         # this file was processed correctly
-        mv_to_done( $filename );
+        mv_to_done( $file );
     }
+    $log->info( q{-} x 79 );
 
     $log->info( q{Finished} );
-    $log->info( q{-} x 79 );
+    $log->info( q{=} x 79 );
 }
 
 ## ----------------------------------------------------------------------------
 
 sub mv_to_processing {
-    my ($filename) = @_;
-    $log->debug( qq{Moving to processing: $filename} );
-    move( qq{$basedir/$filename}, qq{$basedir/.processing/} );
+    my ($file) = @_;
+    $log->debug( qq{Processing: $file->{basename}} );
+    ensure_dir( qq{$basedir/.processing/$file->{subdir}/} );
+    move( qq{$basedir/$file->{subdir}/$file->{basename}}, qq{$basedir/.processing/$file->{subdir}/} );
 }
 
 sub mv_to_failed {
-    my ($filename, $msg) = @_;
+    my ($file, $msg) = @_;
     $log->warn( $msg );
-    $log->info( qq{Moving to failed: $filename} );
-    move( qq{$basedir/.processing/$filename}, qq{$basedir/.failed/} );
+    $log->info( qq{Failed: $file->{basename}} );
+    ensure_dir( qq{$basedir/.failed/$file->{subdir}/} );
+    move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.failed/$file->{subdir}/} );
 }
 
 sub mv_to_done {
-    my ($filename) = @_;
-    $log->info( qq{Moving to done: $filename} );
-    move( qq{$basedir/.processing/$filename}, qq{$basedir/.done/} );
+    my ($file) = @_;
+    $log->info( qq{Done: $file->{basename}} );
+    ensure_dir( qq{$basedir/.done/$file->{subdir}/} );
+    move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.done/$file->{subdir}/} );
+}
+
+sub ensure_dir {
+    my ($dirname) = @_;
+    return if -d $dirname;
+    mkdir $dirname;
 }
 
 ## ----------------------------------------------------------------------------
