@@ -9,6 +9,8 @@ use File::Slurp;
 use JSON::Any;
 use MIME::Lite;
 
+my $VERSION = '0.1.0';
+
 # my $basedir = q{./spool};
 my $basedir = q{/var/cache/dropmail};
 
