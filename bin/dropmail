@@ -45,16 +45,19 @@ my $log = get_logger();
         push @files, $info;
     }
 
-    # move them all to the 'processing' directory
+    # log the number we have found
     $log->info( q{Files found: } . (scalar @files) );
-    foreach my $file ( @files ) {
-        mv_to_processing( $file );
-    }
 
     # read each file in as a hash
     foreach my $file ( @files ) {
         $log->info( q{-} x 79 );
         $log->info( qq{File: $file->{basename}} );
+
+        # first thing to do is to move the file to processing
+        unless ( mv_to_processing( $file ) ) {
+            $log->warn( qq{Couldn't find '$file->{basename}, skipping} );
+            next;
+        }
 
         my $json = read_file( qq{$basedir/.processing/$file->{subdir}/$file->{basename}} );
         my $email = eval { JSON::Any->jsonToObj( $json ) };
@@ -92,7 +95,7 @@ sub mv_to_processing {
     my ($file) = @_;
     $log->debug( qq{Processing: $file->{basename}} );
     ensure_dir( qq{$basedir/.processing/$file->{subdir}/} );
-    move( qq{$basedir/$file->{subdir}/$file->{basename}}, qq{$basedir/.processing/$file->{subdir}/} );
+    return move( qq{$basedir/$file->{subdir}/$file->{basename}}, qq{$basedir/.processing/$file->{subdir}/} );
 }
 
 sub mv_to_failed {
@@ -100,14 +103,14 @@ sub mv_to_failed {
     $log->warn( $msg );
     $log->info( qq{Failed: $file->{basename}} );
     ensure_dir( qq{$basedir/.failed/$file->{subdir}/} );
-    move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.failed/$file->{subdir}/} );
+    return move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.failed/$file->{subdir}/} );
 }
 
 sub mv_to_done {
     my ($file) = @_;
     $log->info( qq{Done: $file->{basename}} );
     ensure_dir( qq{$basedir/.done/$file->{subdir}/} );
-    move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.done/$file->{subdir}/} );
+    return move( qq{$basedir/.processing/$file->{subdir}/$file->{basename}}, qq{$basedir/.done/$file->{subdir}/} );
 }
 
 sub ensure_dir {
