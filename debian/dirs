@@ -1,1 +1,4 @@
 var/cache/dropmail
+var/cache/dropmail/.processing
+var/cache/dropmail/.done
+var/cache/dropmail/.failed
