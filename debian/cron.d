@@ -1,5 +1,3 @@
-MAILTO=chilts@appsattic.com
-
 # mins hour dofm mnth dofw   user          command
 # ---- ---- ---- ---- ----   -----------   ----------------------------------------------------------------------------
    */5    *    *    *    *   root          dropmail
