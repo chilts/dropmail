@@ -1,0 +1,6 @@
+{
+    "to" : "blah.di.blah@example.com",
+    "from" : "from@example.org",
+    "subject" : "A Test Message",
+    "text" : "Hello, World!"
+}
