@@ -1,1 +1,2 @@
 bin/dropmail                            usr/bin
+etc/dropmail.conf                       etc

@@ -11,7 +11,7 @@ Package: dropmail
 Section: perl
 Priority: extra
 Architecture: all
-Depends: ${perl:Depends}, libfile-slurp-perl, libjson-any-perl, libmime-lite-perl
+Depends: ${perl:Depends}, libfile-slurp-perl, libjson-any-perl, libmime-lite-perl, liblog-log4perl-perl
 Description: command line tool to send emails in a queue
  Dropmail allows programs to create emails, but not have to deal with any email
  library. All they need to do is write a file in JSON format into a particular

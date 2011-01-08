@@ -8,68 +8,87 @@ use File::Copy;
 use File::Slurp;
 use JSON::Any;
 use MIME::Lite;
+use Log::Log4perl qw(get_logger);
 
-my $VERSION = '0.1.0';
+## ----------------------------------------------------------------------------
+# constants, setup and initialisation
 
-# my $basedir = q{./spool};
+my $VERSION = '0.2.0';
+
 my $basedir = q{/var/cache/dropmail};
+
+Log::Log4perl::init('/etc/dropmail.conf');
+my $log = get_logger();
 
 ## ----------------------------------------------------------------------------
 
 {
+    $log->info( q{-} x 79 );
+    $log->info( q{Started} );
+
     my @filenames = <$basedir/*.json>;
 
     # just get the file names themselves
     @filenames = map { basename $_ } @filenames;
 
     # move them all to the 'processing' directory
-    move( qq{$basedir/$_}, qq{$basedir/.processing} )
-        foreach @filenames;
+    $log->info( q{Files found: } . (scalar @filenames) );
+    foreach my $filename ( @filenames ) {
+        mv_to_processing( $filename );
+    }
 
     # read each file in as a hash
     foreach my $filename ( @filenames ) {
-        # print "File: $filename\n";
+        $log->info( qq{Reading file '$filename'} );
 
         my $file = read_file( qq{$basedir/.processing/$filename} );
         my $email = eval { JSON::Any->jsonToObj( $file ) };
         if ( $@ ) {
-            # log a warning (that this didn't parse as JSON)
-            print STDERR qq{$filename couldn't parse as JSON: $@};
-            mv_to_failed( $filename );
+            # couldn't parse
+            mv_to_failed( $filename, qq{$filename couldn't parse as JSON: $@} );
             next;
         }
 
         unless ( ref $email eq 'HASH' ) {
-            # log a warning (that this doesn't look like JSON)
-            print STDERR qq{$filename data structure is not a hash\n};
-            mv_to_failed( $filename );
+            # not a hash
+            mv_to_failed( $filename, qq{$filename data structure is not a hash} );
             next;
         }
 
         eval { send_email($email); };
         if ( $@ ) {
-            # log a warning (that this didn't parse as JSON)
-            print STDERR qq{$filename couldn't be sent: $@};
-            mv_to_failed( $filename );
+            # couldn't send
+            mv_to_failed( $filename, qq{$filename couldn't be sent: $@} );
             next;
         }
 
-        # all ok, so move to ok
-        # print " - DONE!\n";
+        # this file was processed correctly
         mv_to_done( $filename );
     }
+
+    $log->info( q{Finished} );
+    $log->info( q{-} x 79 );
 }
 
 ## ----------------------------------------------------------------------------
 
-sub mv_to_failed {
+sub mv_to_processing {
     my ($filename) = @_;
-    move( qq{$basedir/.processing/$filename}, qq{$basedir/.failed/$filename} );
+    $log->debug( qq{Moving to processing: $filename} );
+    move( qq{$basedir/$filename}, qq{$basedir/.processing/} );
+}
+
+sub mv_to_failed {
+    my ($filename, $msg) = @_;
+    $log->warn( $msg );
+    $log->info( qq{Moving to failed: $filename} );
+    move( qq{$basedir/.processing/$filename}, qq{$basedir/.failed/} );
 }
 
 sub mv_to_done {
     my ($filename) = @_;
-    move( qq{$basedir/.processing/$filename}, qq{$basedir/.done/$filename} );
+    $log->info( qq{Moving to done: $filename} );
+    move( qq{$basedir/.processing/$filename}, qq{$basedir/.done/} );
 }
 
 ## ----------------------------------------------------------------------------
