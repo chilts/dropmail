@@ -1,0 +1,5 @@
+{
+    "to" : "from@example.org",
+    "from" : "to@example.net",
+    "text" : "Hello, World!"
+}
