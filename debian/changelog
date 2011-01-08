@@ -1,3 +1,12 @@
+dropmail (0.2.0) lucid; urgency=low
+
+  * Move the files one by one, in case there is an overlapping process also trying to send files
+  * A few examples of emails in JSON format
+  * Allow dropmail to read a directory lower too, helps with group permissions on the filesystem
+  * Add logging (program, config and installation)
+
+ -- Andrew Chilton <chilts@appsattic.com>  Sun, 09 Jan 2011 12:17:51 +1300
+
 dropmail (0.1.0) unstable; urgency=low
 
   * Initial Release.
