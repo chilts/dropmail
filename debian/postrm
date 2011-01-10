@@ -1,0 +1,41 @@
+#!/bin/sh
+set -e
+
+. /usr/share/debconf/confmodule
+
+[ -n "${DEBUG}" ] && set -o xtrace
+
+echo "INFO: dropmail.postrm as '$1' ($2)"
+
+case "$1" in
+    remove)
+
+        # nothing to do
+
+        ;;
+
+    purge)
+
+        if [ -e /usr/share/debconf/confmodule ]; then
+            . /usr/share/debconf/confmodule
+            db_purge
+        fi
+
+        # remove all emails
+        rm -rf /var/lib/dropmail/
+
+        ;;
+
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 0
+        ;;
+esac
+
+#DEBHELPER#
+
+db_stop
+exit 0
