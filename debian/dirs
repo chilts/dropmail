@@ -1,4 +1,4 @@
-var/cache/dropmail
-var/cache/dropmail/.processing
-var/cache/dropmail/.done
-var/cache/dropmail/.failed
+var/lib/dropmail
+var/lib/dropmail/.processing
+var/lib/dropmail/.done
+var/lib/dropmail/.failed

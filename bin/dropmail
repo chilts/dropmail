@@ -15,7 +15,7 @@ use Log::Log4perl qw(get_logger);
 
 my $VERSION = '0.2.0';
 
-my $basedir = q{/var/cache/dropmail};
+my $basedir = q{/var/lib/dropmail};
 
 Log::Log4perl::init('/etc/dropmail.conf');
 my $log = get_logger();
@@ -35,7 +35,7 @@ my $log = get_logger();
         $info->{basename} = basename($filename);
         $info->{fulldir}  = dirname($filename);
         $info->{subdir}   = $info->{fulldir};
-        if ( $info->{fulldir} eq q{/var/cache/dropmail} ) {
+        if ( $info->{fulldir} eq q{/var/lib/dropmail} ) {
             $info->{subdir} = q{.};
         }
         else {
