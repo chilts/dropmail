@@ -8,8 +8,8 @@ was 'v0.1.1' and you're on master (ie. v0.1.1..master (master is optional)):
     git tag -l
 
     # now change these numbers
-    export PREV_REL=0.1.0
-    export RELEASE=0.2.0
+    export PREV_REL=0.2.0
+    export RELEASE=0.3.0
 
     git commit -m 'Prepare for new release of DropMail' PACKAGING
     git push origin master
