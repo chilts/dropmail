@@ -1,0 +1,8 @@
+/var/log/dropmail.log {
+    weekly
+    rotate 52
+    compress
+    missingok
+    delaycompress
+    notifempty
+}
