@@ -13,7 +13,7 @@ use Log::Log4perl qw(get_logger);
 ## ----------------------------------------------------------------------------
 # constants, setup and initialisation
 
-my $VERSION = '0.2.0';
+my $VERSION = '0.3.0';
 
 my $basedir = q{/var/lib/dropmail};
 
@@ -239,3 +239,65 @@ sub _flatten {
 }
 
 ## ----------------------------------------------------------------------------
+
+=head1 NAME
+
+dropmail - send email easily, and without confusion
+
+=head1 WHY DROPMAIL
+
+DropMail is a small program which runs intermittently, reads a directory for
+files, reads them and tries to send each one as an email using the contents
+supplied inside the file.
+
+The main reason for using this program is so that your programs or websites can
+still send email, but they don't have to try and use any of the mail clients or
+libraries around to do the cause, they just write a small datastructure out to
+a file in JSON format and this program does the rest.
+
+They also don't have to wait around for the MTA to accept each and every mail,
+and instead can concentrate on serving the request as soon as possible so it
+can return to the user for a speedy looking website.
+
+=head1 THE PHILOSOPHY OF DROPMAIL
+
+DropMail has been written so you don't have to figure out all those sodding
+email interfaces again and again. Just create a datastructure, save it in JSON
+format to a particular directory and carry on, knowing that dropmail will send
+it for you sometime soon.
+
+=head1 SYNOPSIS
+
+    use JSON::Any;
+    use File::Slurp;
+
+    my $email = {
+        to    => 'someone@example.com',
+        from  => 'someone@example.org',
+        # cc  => # scalar or array
+        # bcc => # scalar or array
+        copy_self => 1, # default 0, copy 'from' address to the 'bcc' list
+        subject => 'Hello, World!',
+        text => 'This is the content', # required
+        html => '<p>This is the content</p>', # optional
+        # attachments => [ ... ] # coming soon
+    };
+
+    write_file( q{/var/lib/dropmail/myprog/0001.json}, JSON::Any->objToJson($email) );
+    write_file( q{/var/lib/dropmail/myprog/cafebabe.json}, JSON::Any->objToJson($email) );
+    write_file( q{/var/lib/dropmail/myprog/20110301222141-wxyz.json}, JSON::Any->objToJson($email) );
+
+=head1 COPYRIGHT & LICENSE
+
+Written by Andrew Chilton for AppsAttic Ltd.
+
+Copyright 2010-2011, AppsAttic Ltd.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+This program is distributed in the hope that it will be useful, but without any
+warranty; without even the implied warranty of merchantability or fitness for a
+particular purpose.
+
+=cut
