@@ -1,27 +1,22 @@
-dropmail is designed to make your life easier when sending emails from your web
+DropMail is designed to make your life easier when sending emails from your web
 server or backend cron jobs.
 
 # INSTALLATION
 
-To install this module, run the following commands:
-
-    perl Makefile.PL
-    make
-    make test
-    make install
+ToDo.
 
 # SUPPORT AND DOCUMENTATION
 
 You can look for information at:
 
-* dropmail home page
+* DropMail home page
     * <http://www.chilts.org/project/dropmail/>
 
 * Project home
-    * <http://github.com/andychilton/dropmail>
+    * <http://github.com/appsattic/dropmail>
 
 * Issue list at Github (report bugs here)
-    * <http://github.com/andychilton/dropmail/issues>
+    * <http://github.com/appsattic/dropmail/issues>
 
 # COPYRIGHT AND LICENSE
 
