@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Andrew Chilton <chilts@appsattic.com>
 Uploaders: Andrew Chilton <chilts@appsattic.com>
 Standards-Version: 3.6.1
-Build-Depends: debhelper (>= 5)
+Build-Depends: debhelper (>= 7)
 Build-Depends-Indep: perl
 
 Package: dropmail
