@@ -13,7 +13,7 @@ use Log::Log4perl qw(get_logger);
 ## ----------------------------------------------------------------------------
 # constants, setup and initialisation
 
-my $VERSION = '0.3.0';
+my $VERSION = '0.4.0';
 
 my $basedir = q{/var/lib/dropmail};
 
