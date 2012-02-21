@@ -32,6 +32,7 @@ binary:
 	dh_installdebconf
 	dh_installman
 	dh_installchangelogs
+	dh_installlogrotate
 	dh_compress
 	dh_fixperms
 	dh_installdeb
