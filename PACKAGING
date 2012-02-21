@@ -8,8 +8,8 @@ was 'v0.1.1' and you're on master (ie. v0.1.1..master (master is optional)):
     git tag -l
 
     # now change these numbers
-    export PREV_REL=0.4.0
-    export RELEASE=0.5.0
+    export PREV_REL=0.5.0
+    export RELEASE=0.6.0
 
     # change PACKAGING and bin/dropmail for the new version numbers
 
@@ -18,7 +18,6 @@ was 'v0.1.1' and you're on master (ie. v0.1.1..master (master is optional)):
     git push origin master
 
     git log v${PREV_REL}..master | grep '^    ' | sort -r | sed 's/^   /  */' | xclip
-    git diff v${PREV_REL}..master
 
 Change the top version number and remove the 'ubuntu' part. Make sure it is in
 'unstable' rather than 'lucid':
@@ -42,14 +41,18 @@ h2. Making the Packages and Pushing them to the Debian Repository
 
 Test build:
 
+    ssh ash.appsattic.com
+
+    ssh-agent > /tmp/ssh.$$
+    . /tmp/ssh.$$
+    ssh-add
+
     cd ~/appsattic/dropmail/
     git fetch && git rebase origin/master && dpkg-buildpackage -us -uc -tc -t -b
 
 Add it to the repo:
 
-    ssh-agent > /tmp/ssh.$$
-    . /tmp/ssh.$$
-    ssh-add
+    ### DO THE VERSION EXPORTS ABOVE ###
 
     cd ../packages
     git fetch
