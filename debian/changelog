@@ -1,3 +1,10 @@
+dropmail (0.5.0) lucid; urgency=low
+
+  * Turn the debian/rules file into a generic one (so that dh_installlogrotate will run)
+  * Prepare for new release of DropMail (v0.5.0)
+
+ -- Andrew Chilton <chilts@appsattic.com>  Wed, 22 Feb 2012 10:28:47 +1300
+
 dropmail (0.4.0) lucid; urgency=low
 
   * Clean up when purging
