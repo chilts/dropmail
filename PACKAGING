@@ -42,9 +42,14 @@ h2. Making the Packages and Pushing them to the Debian Repository
 
 Test build:
 
-    dpkg-buildpackage -us -uc -tc -t -b
+    cd ~/appsattic/dropmail/
+    git fetch && git rebase origin/master && dpkg-buildpackage -us -uc -tc -t -b
 
 Add it to the repo:
+
+    ssh-agent > /tmp/ssh.$$
+    . /tmp/ssh.$$
+    ssh-add
 
     cd ../packages
     git fetch
